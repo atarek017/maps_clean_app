@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../../domain/location_permission_status.dart';
+import '../../domain/permetions/location_permission_status.dart';
 import '../../domain/permetions/i_permention_service.dart';
 import '../app_life_cycle/application_life_cycle_cubit.dart';
 
@@ -14,36 +14,46 @@ class PermissionCubit extends Cubit<PermissionState> {
   StreamSubscription? _locationServicesStatusSubscription;
 
   final ApplicationLifeCycleCubit _applicationLifeCycleCubit;
-  StreamSubscription<Iterable<ApplicationLifeCycleState>>?_appLifeCycleSubscription;
+  StreamSubscription<Iterable<ApplicationLifeCycleState>>?
+      _appLifeCycleSubscription;
 
   PermissionCubit(this._iPermissionServices, this._applicationLifeCycleCubit)
       : super(PermissionState()) {
-
     /// Location Permission isGranted
-    _iPermissionServices.isLocationPermissionGranted().then((bool isLocationPermissionGranted) {
-      emit(state.copyWith(isLocationPermissionGranted: isLocationPermissionGranted));
+    _iPermissionServices
+        .isLocationPermissionGranted()
+        .then((bool isLocationPermissionGranted) {
+      emit(state.copyWith(
+          isLocationPermissionGranted: isLocationPermissionGranted));
     });
 
     /// Location Services isEnabled
-    _iPermissionServices.isLocationServicesEnabled().then((bool isLocationServicesEnabled) {
-      emit(state.copyWith(isLocationServicesEnabled: isLocationServicesEnabled));
+    _iPermissionServices
+        .isLocationServicesEnabled()
+        .then((bool isLocationServicesEnabled) {
+      emit(
+          state.copyWith(isLocationServicesEnabled: isLocationServicesEnabled));
     });
 
     /// Listen on change location Services
-    _locationServicesStatusSubscription = _iPermissionServices.locationServicesStatusStream.listen((isLocationServicesEnabled) {
-      emit(state.copyWith(isLocationServicesEnabled: isLocationServicesEnabled));
+    _locationServicesStatusSubscription = _iPermissionServices
+        .locationServicesStatusStream
+        .listen((isLocationServicesEnabled) {
+      emit(
+          state.copyWith(isLocationServicesEnabled: isLocationServicesEnabled));
     });
 
     /// listen on change app life cycle
     _appLifeCycleSubscription = _applicationLifeCycleCubit.stream
         .startWith(_applicationLifeCycleCubit.state)
-          .pairwise()
-          .listen((pair) async {
-        final previous = pair.first;
+        .pairwise()
+        .listen((pair) async {
+      final previous = pair.first;
       final current = pair.last;
 
       if (previous.isResumed != current.isResumed && current.isResumed) {
-        bool isGranted = await _iPermissionServices.isLocationPermissionGranted();
+        bool isGranted =
+            await _iPermissionServices.isLocationPermissionGranted();
 
         emit(state.copyWith(isLocationPermissionGranted: isGranted));
       }

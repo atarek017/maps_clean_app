@@ -1,4 +1,4 @@
-import '../location_permission_status.dart';
+import 'location_permission_status.dart';
 
 abstract class IPermissionServices {
   // granted location permission

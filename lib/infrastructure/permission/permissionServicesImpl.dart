@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:maps_clean_app/domain/location_permission_status.dart';
+import 'package:maps_clean_app/domain/permetions/location_permission_status.dart';
 import 'package:maps_clean_app/domain/permetions/i_permention_service.dart';
 
 class PermissionServicesImpl implements IPermissionServices {
