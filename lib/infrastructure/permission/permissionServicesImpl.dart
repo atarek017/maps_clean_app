@@ -3,14 +3,16 @@ import 'package:maps_clean_app/domain/permetions/location_permission_status.dart
 import 'package:maps_clean_app/domain/permetions/i_permention_service.dart';
 
 class PermissionServicesImpl implements IPermissionServices {
-
   @override
-  Stream<bool> get locationServicesStatusStream => Geolocator.getServiceStatusStream().map((serviceStatus) => serviceStatus == ServiceStatus.enabled);
+  Stream<bool> get locationServicesStatusStream =>
+      Geolocator.getServiceStatusStream()
+          .map((serviceStatus) => serviceStatus == ServiceStatus.enabled);
 
   @override
   Future<bool> isLocationPermissionGranted() async {
     final status = await Geolocator.checkPermission();
-    final isGranted = status == LocationPermission.always || status == LocationPermission.whileInUse;
+    final isGranted = status == LocationPermission.always ||
+        status == LocationPermission.whileInUse;
     return isGranted;
   }
 
@@ -38,5 +40,15 @@ class PermissionServicesImpl implements IPermissionServices {
     }
 
     return result;
+  }
+
+  @override
+  Future<void> openAppSettings() {
+    return Geolocator.openAppSettings();
+  }
+
+  @override
+  Future<void> openLocationSettings() {
+    return Geolocator.openLocationSettings();
   }
 }

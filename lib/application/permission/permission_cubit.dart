@@ -67,6 +67,14 @@ class PermissionCubit extends Cubit<PermissionState> {
     emit(state.copyWith(isLocationPermissionGranted: isGranted));
   }
 
+  void openAppSettings(){
+    _iPermissionServices.openAppSettings();
+  }
+
+  void openLocationSettings() {
+    _iPermissionServices.openLocationSettings();
+  }
+
   @override
   Future<void> close() async {
     await _locationServicesStatusSubscription?.cancel();

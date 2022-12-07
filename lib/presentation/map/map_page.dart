@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maps_clean_app/application/location/location_cubit.dart';
 import 'package:maps_clean_app/application/permission/permission_cubit.dart';
-  import 'package:maps_clean_app/domain/location/location_model/location_model.dart';
+import 'package:maps_clean_app/domain/location/location_model/location_model.dart';
 
 import '../../injection.dart';
 
@@ -27,7 +27,9 @@ class MapPage extends StatelessWidget {
                 },
                 builder: (context, isLocationPermissionGranted) {
                   return Text(
-                      "Location Permission: ${isLocationPermissionGranted ? "enabled" : "disable"}");
+                      "Location Permission: ${isLocationPermissionGranted
+                          ? "enabled"
+                          : "disable"}");
                 },
               ),
               const SizedBox(
@@ -39,7 +41,9 @@ class MapPage extends StatelessWidget {
                 },
                 builder: (context, isLocationServicesEnabled) {
                   return Text(
-                      "Location Services: ${isLocationServicesEnabled ? "enabled" : "disable"}");
+                      "Location Services: ${isLocationServicesEnabled
+                          ? "enabled"
+                          : "disable"}");
                 },
               ),
               const SizedBox(
@@ -55,17 +59,45 @@ class MapPage extends StatelessWidget {
               ),
               BlocSelector<LocationCubit, LocationState, LocationModel>(
                 selector: (state) {
-
                   return state.userLocation;
                 },
                 builder: (context, state) {
-                  return Text("latitude: ${state.latitude}  :  longitude: ${state.longitude}");
+                  return Text(
+                      "latitude: ${state.latitude}  :  longitude: ${state
+                          .longitude}");
                 },
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class PermissionDialog extends StatelessWidget {
+  const PermissionDialog({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Text("Location Permission"),
+            TextButton(onPressed: () {}, child: Text("allowed"))
+          ],
+        ),
+        const SizedBox(height: 15),
+        Row(
+          children: [
+            Text("Location Permission"),
+            TextButton(onPressed: () {}, child: Text("allowed"))
+          ],
+        ),
+        const SizedBox(height: 15),
+      ],
     );
   }
 }
