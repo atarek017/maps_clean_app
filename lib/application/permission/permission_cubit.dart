@@ -52,27 +52,36 @@ class PermissionCubit extends Cubit<PermissionState> {
       final current = pair.last;
 
       if (previous.isResumed != current.isResumed && current.isResumed) {
-        bool isGranted =
-            await _iPermissionServices.isLocationPermissionGranted();
+        bool isGranted = await _iPermissionServices.isLocationPermissionGranted();
+        if(state.isLocationPermissionGranted !=isGranted && isGranted){
+          hideOpenAppSettingsDialog();
+        }
 
         emit(state.copyWith(isLocationPermissionGranted: isGranted));
       }
     });
   }
 
+
+  void hideOpenAppSettingsDialog() {
+    emit(state.copyWith(displayOpenAppSettingsDialog: false));
+  }
+
+
   Future<void> requestLocationPermission() async {
     final status = await _iPermissionServices.requestLocationPermission();
+    bool displayOpenAppSettingsDialog=status==LocationPermissionStatus.deniedForEver;
 
     final bool isGranted = status == LocationPermissionStatus.granted;
-    emit(state.copyWith(isLocationPermissionGranted: isGranted));
+    emit(state.copyWith(isLocationPermissionGranted: isGranted,displayOpenAppSettingsDialog: displayOpenAppSettingsDialog));
   }
 
-  void openAppSettings(){
-    _iPermissionServices.openAppSettings();
+  Future<void> openAppSettings() async {
+    await _iPermissionServices.openAppSettings();
   }
 
-  void openLocationSettings() {
-    _iPermissionServices.openLocationSettings();
+  Future<void> openLocationSettings() async {
+    await _iPermissionServices.openLocationSettings();
   }
 
   @override
