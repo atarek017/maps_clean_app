@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:maps_clean_app/application/location/location_cubit.dart';
 import 'package:maps_clean_app/application/permission/permission_cubit.dart';
 import 'package:maps_clean_app/domain/location/location_model/location_model.dart';
@@ -15,36 +17,38 @@ class MapPage extends StatelessWidget {
       create: (context) => getIt<LocationCubit>(),
       child: MultiBlocListener(
         listeners: [
-          ///
-          BlocListener<PermissionCubit, PermissionState>(
-            listenWhen: (previous, current) {
-              return previous.isLocationPermissionsGrantedAndServicesEnable !=
-                      current.isLocationPermissionsGrantedAndServicesEnable &&
-                  current.isLocationPermissionsGrantedAndServicesEnable;
-            },
-            listener: (context, state) {
-              Navigator.of(context).pop();
-            },
-          ),
-
-          ///
           BlocListener<PermissionCubit, PermissionState>(
             listenWhen: (p, c) {
-              return p.displayOpenAppSettingsDialog !=
-                      c.displayOpenAppSettingsDialog &&
-                  c.displayOpenAppSettingsDialog;
+              return p.isLocationPermissionsGrantedAndServicesEnable !=
+                  c.isLocationPermissionsGrantedAndServicesEnable &&
+                  c.isLocationPermissionsGrantedAndServicesEnable;
             },
+            listener: (context, state) {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          BlocListener<PermissionCubit, PermissionState>(
+            listenWhen: (p, c) =>
+            p.displayOpenAppSettingsDialog !=
+                c.displayOpenAppSettingsDialog &&
+                c.displayOpenAppSettingsDialog,
             listener: (context, state) {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
                     content: AppSettingsDialog(
                       openAppSettings: () {
-                        debugPrint("Location permission button pressed!");
+                        debugPrint("Open App Settings pressed!");
                         context.read<PermissionCubit>().openAppSettings();
                       },
                       cancelDialog: () {
+                        debugPrint("Cancel pressed!");
                         context
                             .read<PermissionCubit>()
                             .hideOpenAppSettingsDialog();
@@ -55,88 +59,71 @@ class MapPage extends StatelessWidget {
               );
             },
           ),
-
-          ///
           BlocListener<PermissionCubit, PermissionState>(
-            listenWhen: (p, c) {
-              return p.displayOpenAppSettingsDialog !=
-                      c.displayOpenAppSettingsDialog &&
-                  !c.displayOpenAppSettingsDialog;
-            },
-            listener: (context, state) {
-              Navigator.of(context).pop();
-            },
-          ),
+              listenWhen: (p, c) =>
+              p.displayOpenAppSettingsDialog !=
+                  c.displayOpenAppSettingsDialog &&
+                  !c.displayOpenAppSettingsDialog,
+              listener: (context, state) {
+                Navigator.of(context).pop();
+              }),
         ],
         child: Scaffold(
           appBar: AppBar(
-            title: Text("Map "),
+            title: const Text("Map Tutorial"),
           ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                BlocSelector<PermissionCubit, PermissionState, bool>(
-                  selector: (state) {
-                    return state.isLocationPermissionGranted;
-                  },
-                  builder: (context, isLocationPermissionGranted) {
-                    return Text(
-                        "Location Permission: ${isLocationPermissionGranted ? "enabled" : "disable"}");
-                  },
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                BlocSelector<PermissionCubit, PermissionState, bool>(
-                  selector: (state) {
-                    return state.isLocationServicesEnabled;
-                  },
-                  builder: (context, isLocationServicesEnabled) {
-                    return Text(
-                        "Location Services: ${isLocationServicesEnabled ? "enabled" : "disable"}");
-                  },
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                OutlinedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          final bool isLocationPermissionGranted =
-                              context.select((PermissionCubit element) =>
-                                  element.state.isLocationPermissionGranted);
-                          final bool isLocationServicesEnabled = context.select(
-                              (PermissionCubit element) =>
-                                  element.state.isLocationServicesEnabled);
-
-                          return AlertDialog(
-                            content: PermissionDialog(
-                                isLocationPermissionGranted:
-                                    isLocationPermissionGranted,
-                                isLocationServicesEnabled:
-                                    isLocationServicesEnabled),
-                          );
-                        },
-                      );
-                    },
-                    child: const Text("Request Location Permission")),
-                const SizedBox(
-                  height: 20,
-                ),
-                BlocSelector<LocationCubit, LocationState, LocationModel>(
-                  selector: (state) {
-                    return state.userLocation;
+          body: Stack(
+            children: [
+              Center(
+                child: BlocBuilder<LocationCubit, LocationState>(
+                  buildWhen: (p, c) {
+                    return p.userLocation != c.userLocation;
                   },
                   builder: (context, state) {
-                    return Text(
-                        "latitude: ${state.latitude}  :  longitude: ${state.longitude}");
+                    return FlutterMap(
+                      options: MapOptions(
+                        center: LatLng(51.509, -0.128),
+                        zoom: 3.0,
+                      ),
+                      layers: [
+                        TileLayerOptions(
+                          urlTemplate:
+                          'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.example.map_tutorial',
+                        ),
+                        MarkerLayerOptions(
+                          markers: [
+                            Marker(
+                                point: LatLng(state.userLocation.latitude,
+                                    state.userLocation.longitude),
+                                width: 60,
+                                height: 60,
+                                builder: (context) {
+                                  return const UserMarker();
+                                }),
+                          ],
+                        )
+                      ],
+                    );
                   },
                 ),
-              ],
-            ),
+              ),
+              BlocSelector<PermissionCubit, PermissionState, bool>(
+                selector: (state) {
+                  return state.isLocationPermissionsGrantedAndServicesEnable;
+                },
+                builder:
+                    (context, isLocationPermissionGrantedAndServicesEnabled) {
+                  return isLocationPermissionGrantedAndServicesEnabled
+                      ? const SizedBox.shrink()
+                      : const Positioned(
+                    right: 30,
+                    bottom: 50,
+                    child: LocationButton(),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -144,10 +131,70 @@ class MapPage extends StatelessWidget {
   }
 }
 
+class UserMarker extends StatelessWidget {
+  const UserMarker({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.person_pin,
+        color: Colors.white,
+        size: 35,
+      ),
+    );
+  }
+}
+
+class LocationButton extends StatelessWidget {
+  const LocationButton({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+              (Set<MaterialState> states) {
+            return Colors.black;
+          },
+        ),
+      ),
+      onPressed: () {
+        debugPrint("Location Services button Pressed!");
+        // context.read<PermissionCubit>().requestLocationPermission();
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            final bool isLocationPermissionGranted = context.select(
+                    (PermissionCubit element) =>
+                element.state.isLocationPermissionGranted);
+            final bool isLocationServicesEnabled = context.select(
+                    (PermissionCubit element) =>
+                element.state.isLocationServicesEnabled);
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              content: PermissionDialog(
+                isLocationPermissionGranted: isLocationPermissionGranted,
+                isLocationServicesEnabled: isLocationServicesEnabled,
+              ),
+            );
+          },
+        );
+      },
+      child: const Text("Request Location Permission"),
+    );
+  }
+}
+
 class PermissionDialog extends StatelessWidget {
   final bool isLocationPermissionGranted;
   final bool isLocationServicesEnabled;
-
   const PermissionDialog({
     Key? key,
     required this.isLocationPermissionGranted,
@@ -171,10 +218,11 @@ class PermissionDialog extends StatelessWidget {
               onPressed: isLocationPermissionGranted
                   ? null
                   : () {
-                      context
-                          .read<PermissionCubit>()
-                          .requestLocationPermission();
-                    },
+                debugPrint("Location permission button pressed!");
+                context
+                    .read<PermissionCubit>()
+                    .requestLocationPermission();
+              },
               child: Text(isLocationPermissionGranted ? "allowed" : "allow"),
             ),
           ],
@@ -188,9 +236,9 @@ class PermissionDialog extends StatelessWidget {
               onPressed: isLocationServicesEnabled
                   ? null
                   : () {
-                      debugPrint("Location services button pressed!");
-                      context.read<PermissionCubit>().openLocationSettings();
-                    },
+                debugPrint("Location services button pressed!");
+                context.read<PermissionCubit>().openLocationSettings();
+              },
               child: Text(isLocationServicesEnabled ? "allowed" : "allow"),
             ),
           ],
@@ -204,7 +252,6 @@ class PermissionDialog extends StatelessWidget {
 class AppSettingsDialog extends StatelessWidget {
   final Function openAppSettings;
   final Function cancelDialog;
-
   const AppSettingsDialog({
     Key? key,
     required this.openAppSettings,
