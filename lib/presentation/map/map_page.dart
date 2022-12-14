@@ -20,7 +20,7 @@ class MapPage extends StatelessWidget {
           BlocListener<PermissionCubit, PermissionState>(
             listenWhen: (p, c) {
               return p.isLocationPermissionsGrantedAndServicesEnable !=
-                  c.isLocationPermissionsGrantedAndServicesEnable &&
+                      c.isLocationPermissionsGrantedAndServicesEnable &&
                   c.isLocationPermissionsGrantedAndServicesEnable;
             },
             listener: (context, state) {
@@ -31,8 +31,8 @@ class MapPage extends StatelessWidget {
           ),
           BlocListener<PermissionCubit, PermissionState>(
             listenWhen: (p, c) =>
-            p.displayOpenAppSettingsDialog !=
-                c.displayOpenAppSettingsDialog &&
+                p.displayOpenAppSettingsDialog !=
+                    c.displayOpenAppSettingsDialog &&
                 c.displayOpenAppSettingsDialog,
             listener: (context, state) {
               showDialog(
@@ -61,8 +61,8 @@ class MapPage extends StatelessWidget {
           ),
           BlocListener<PermissionCubit, PermissionState>(
               listenWhen: (p, c) =>
-              p.displayOpenAppSettingsDialog !=
-                  c.displayOpenAppSettingsDialog &&
+                  p.displayOpenAppSettingsDialog !=
+                      c.displayOpenAppSettingsDialog &&
                   !c.displayOpenAppSettingsDialog,
               listener: (context, state) {
                 Navigator.of(context).pop();
@@ -88,7 +88,7 @@ class MapPage extends StatelessWidget {
                       layers: [
                         TileLayerOptions(
                           urlTemplate:
-                          'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png',
+                              'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.example.map_tutorial',
                         ),
                         MarkerLayerOptions(
@@ -117,10 +117,10 @@ class MapPage extends StatelessWidget {
                   return isLocationPermissionGrantedAndServicesEnabled
                       ? const SizedBox.shrink()
                       : const Positioned(
-                    right: 30,
-                    bottom: 50,
-                    child: LocationButton(),
-                  );
+                          right: 30,
+                          bottom: 50,
+                          child: LocationButton(),
+                        );
                 },
               ),
             ],
@@ -131,22 +131,54 @@ class MapPage extends StatelessWidget {
   }
 }
 
-class UserMarker extends StatelessWidget {
+class UserMarker extends StatefulWidget {
   const UserMarker({Key? key}) : super(key: key);
 
   @override
+  State<UserMarker> createState() => _UserMarkerState();
+}
+
+class _UserMarkerState extends State<UserMarker>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation<double> sizeAnimation;
+
+  @override
+  void initState() {
+    animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000),);
+    sizeAnimation = Tween<double>(begin: 45, end: 60).animate(CurvedAnimation(parent: animationController, curve: Curves.fastOutSlowIn));
+    animationController.repeat(reverse: true);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.person_pin,
-        color: Colors.white,
-        size: 35,
-      ),
-    );
+    return AnimatedBuilder(
+        animation: sizeAnimation,
+        builder: (context, widget) {
+          return Center(
+            child: Container(
+              width: sizeAnimation.value,
+              height: sizeAnimation.value,
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: widget,
+            ),
+          );
+
+        },child:  const Icon(
+      Icons.person_pin,
+      color: Colors.white,
+      size: 35,
+    ),);
   }
 }
 
@@ -158,7 +190,7 @@ class LocationButton extends StatelessWidget {
     return ElevatedButton(
       style: ButtonStyle(
         backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-              (Set<MaterialState> states) {
+          (Set<MaterialState> states) {
             return Colors.black;
           },
         ),
@@ -170,11 +202,11 @@ class LocationButton extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             final bool isLocationPermissionGranted = context.select(
-                    (PermissionCubit element) =>
-                element.state.isLocationPermissionGranted);
+                (PermissionCubit element) =>
+                    element.state.isLocationPermissionGranted);
             final bool isLocationServicesEnabled = context.select(
-                    (PermissionCubit element) =>
-                element.state.isLocationServicesEnabled);
+                (PermissionCubit element) =>
+                    element.state.isLocationServicesEnabled);
             return AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15.0),
@@ -195,6 +227,7 @@ class LocationButton extends StatelessWidget {
 class PermissionDialog extends StatelessWidget {
   final bool isLocationPermissionGranted;
   final bool isLocationServicesEnabled;
+
   const PermissionDialog({
     Key? key,
     required this.isLocationPermissionGranted,
@@ -218,11 +251,11 @@ class PermissionDialog extends StatelessWidget {
               onPressed: isLocationPermissionGranted
                   ? null
                   : () {
-                debugPrint("Location permission button pressed!");
-                context
-                    .read<PermissionCubit>()
-                    .requestLocationPermission();
-              },
+                      debugPrint("Location permission button pressed!");
+                      context
+                          .read<PermissionCubit>()
+                          .requestLocationPermission();
+                    },
               child: Text(isLocationPermissionGranted ? "allowed" : "allow"),
             ),
           ],
@@ -236,9 +269,9 @@ class PermissionDialog extends StatelessWidget {
               onPressed: isLocationServicesEnabled
                   ? null
                   : () {
-                debugPrint("Location services button pressed!");
-                context.read<PermissionCubit>().openLocationSettings();
-              },
+                      debugPrint("Location services button pressed!");
+                      context.read<PermissionCubit>().openLocationSettings();
+                    },
               child: Text(isLocationServicesEnabled ? "allowed" : "allow"),
             ),
           ],
@@ -252,6 +285,7 @@ class PermissionDialog extends StatelessWidget {
 class AppSettingsDialog extends StatelessWidget {
   final Function openAppSettings;
   final Function cancelDialog;
+
   const AppSettingsDialog({
     Key? key,
     required this.openAppSettings,
